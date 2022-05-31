@@ -101,6 +101,18 @@ The Bootstrap class below is what actually performs the configuration of the bui
 	    private static void ConfigureCoreServices(IServiceCollection serviceCollection)
 	    {
 	        // Add core service registrations here
+	        serviceCollection
+	            .AddStaticInstance<IServiceA>(new ServiceA())
+	            .AddSingletonService<ServiceBC, ServiceBC)
+	            .AddServiceAlias<IServiceB, ServiceBC>()
+	            .AddServiceAlias<IServiceC, ServiceBC)()
+	            .AddSingletonService<IServiceD, ServiceD>("direct")
+	            .AddSingletonService<IServiceD, ServiceDDecorator>()
+	            .BindParameterToService<IServiceD>("instance", "direct")
+	            .BindParameterToValue("cacheLength", new TimeSpan(1, 0, 0))
+	            .AddTransientService<IServiceE>(p => ServiceEFactory.Create())
+	            .AddSceneService<IServiceF, ServiceF>()
+	            .BindParameterToDelegate<string>("sceneName", p => Scene.GetSceneName());
 	    }
 	}
 

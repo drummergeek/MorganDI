@@ -19,7 +19,7 @@ Supports 3 Lifetime Scopes
 * Events wired to the service provider and service provider builder to know when services are instantiating, and when they are requested.
 
 ## Coming Soon
-* MonoBehvaiour examples for direct usage in Unity.
+* ~~MonoBehvaiour examples for direct usage in Unity.~~ Added!
 * Full test suite for the default implementation.
 * More complete documentation.
 

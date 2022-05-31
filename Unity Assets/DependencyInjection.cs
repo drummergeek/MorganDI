@@ -14,7 +14,7 @@ public class DependencyInjection : MonoBehaviour
 	}
 }
 
-internal static class DI
+public static class DI
 {
 	private readonly static object _lock = new object();
 

@@ -30,9 +30,9 @@ The following example creates a service provider builder, then passes it to a co
 	{
 		private readonly IServiceProvider _serviceProvider;
 		public IServiceProvider ServiceProvider => _serviceProvider;
-	
-	    public static void Initialize()
-	    {
+
+		public static void Initialize()
+		{
 		    IServiceProvider serviceProvider =
 			    BuildContainer(new ServiceProviderBuilder());
 		}
@@ -60,7 +60,7 @@ The following example creates a service provider builder, then passes it to a co
 				.AddTransientService<IServiceE>(p => ServiceEFactory.Create())
 				.AddSceneService<IServiceF, ServiceF>()
 				.BindParameterToDelegate<string>("sceneName", p => Scene.GetSceneName());
-	}
+		}
 
 Resolving a service from the container can be done directly (for MonoBehaviours, since we can't do constructor injection in that scenario) with the following method example.
 

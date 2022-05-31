@@ -1,3 +1,4 @@
+
 # Morgan DI
 A dependency injection framework for Unity3D that mimics the style of Microsoft.Extensions.DependencyInjection.
 
@@ -19,58 +20,101 @@ Supports 3 Lifetime Scopes
 * Events wired to the service provider and service provider builder to know when services are instantiating, and when they are requested.
 
 ## Coming Soon
-* ~~MonoBehvaiour examples for direct usage in Unity.~~ Added!
 * Full test suite for the default implementation.
 * More complete documentation.
+* ~~MonoBehvaiour examples for direct usage in Unity.~~ Added!
 
 ## Example 
-The following example creates a service provider builder, then passes it to a container configuration method, which then has the registers a method containing a selection of services. The configuration method then builds and returns the service provider.
+The following example creates a service provider builder, then passes it to a container configuration method in the application bootstrap class. It stores the container as a singleton for use in the MonoBehaviours. The static class providing the DI abstracts the calls away from the actual interface so that it is simpler to call and decouples the framework from the actual application logic. The OnDestroy method in the component will clear the scene scope in preparation for the next scene load. This component should have one instance on every scene that is going to utilize dependency injection.
 
-	public static class App
+	public class DependencyInjection : MonoBehaviour
 	{
-		private readonly IServiceProvider _serviceProvider;
-		public IServiceProvider ServiceProvider => _serviceProvider;
+		private void Awake()
+		{
+			DI.Initialize();
+		}
 
-		public static void Initialize()
+		private void OnDestroy()
 		{
-		    IServiceProvider serviceProvider =
-			    BuildContainer(new ServiceProviderBuilder());
-		}
-	
-		private static IServiceProvider BuildContainer(IServiceProviderBuilder builder)
-		{
-			IServiceProvider serviceProvider = builder
-				.RegisterServiceConfiguration(ConfigureServices)
-				.Build();
-		
-			return serviceProvider;
-		}
-	
-		private static void ConfigureServices(IServiceCollection serviceCollection)
-		{
-			serviceCollection
-				.AddStaticInstance<IServiceA>(new ServiceA())
-				.AddSingletonService<ServiceBC, ServiceBC)
-				.AddServiceAlias<IServiceB, ServiceBC>()
-				.AddServiceAlias<IServiceC, ServiceBC)()
-				.AddSingletonService<IServiceD, ServiceD>("direct")
-				.AddSingletonService<IServiceD, ServiceDDecorator>()
-				.BindParameterToService<IServiceD>("instance", "direct")
-				.BindParameterToValue("cacheLength", new TimeSpan(1, 0, 0))
-				.AddTransientService<IServiceE>(p => ServiceEFactory.Create())
-				.AddSceneService<IServiceF, ServiceF>()
-				.BindParameterToDelegate<string>("sceneName", p => Scene.GetSceneName());
+			DI.TeardownScene();
 		}
 	}
 
-Resolving a service from the container can be done directly (for MonoBehaviours, since we can't do constructor injection in that scenario) with the following method example.
+	public static class DI
+	{
+		private readonly static object _lock = new object();
 
-	App.ServiceProvider.Resolve<IServiceA>();
+		private static IServiceProvider _serviceProvider;
+
+		/// <summary>
+		/// Build the DI container if it is not yet available.
+		/// </summary>
+		public static void Initialize()
+		{
+			if (_serviceProvider == null)
+				lock (_lock)
+				    // Ensure that something else didn't instantiate it before we acquired the lock
+					if (_serviceProvider == null) 
+					{
+						_serviceProvider = AppDependencyBootstrap.BuildContainer(new ServiceProviderBuilder());
+					}
+		}
 		
-or
+		/// <inheritdoc cref="IServiceProvider.TeardownScene"/>
+		public static void TeardownScene()
+		{
+			if (_serviceProvider == null)
+				throw new InvalidOperationException("DI container not initialized!");
+			
+			_serviceProvider.TeardownScene();
+		}
+		
+		/// <summary>
+		/// Return an instance of the requested service.
+		/// </summary>
+		/// <typeparam name="TService">The type of the service requested.</typeparam>
+		/// <param name="name">The optional instance name of the service requested.</param>
+		public static TService Resolve<TService>(string name = null)
+		{
+			if (_serviceProvider == null)
+				throw new InvalidOperationException("DI container not initialized!");
+			
+			return _serviceProvider.Resolve<TService>(name);
+		}
+	}
 
-	App.ServiceProvider.Resolve<IServiceD>("instance");
+The Bootstrap class below is what actually performs the configuration of the builder and returns the container.
 
-The scene scope can be cleared during the OnDestroy method of the container component in the scene hierarchy by calling the following line.
+	internal static class AppDependencyBootstrap
+	{
+		public static IServiceProvider BuildContainer(IServiceProviderBuilder builder)
+		{
+			IServiceProvider serviceProvider = builder
+				.RegisterServiceConfiguration(ConfigureCoreServices)
+			//  .RegisterServiceConfiguration(MySystemBootstrapClass.ConfigureServices)
+				.Register
+				.Build();
 
-	App.ServiceProvider.TeardownScene(); 
+			return serviceProvider;
+		}
+
+		private static void ConfigureCoreServices(IServiceCollection serviceCollection)
+		{
+			// Add core service registrations here
+		}
+	}
+
+
+Resolving a service in a MonoBehviour is done by calling the Resolve method on the DI singleton. 
+
+    public class MyComponent : MonoBehaviour
+    {
+        private IServiceA _serviceA;
+        private IServiceD _serviceD;
+        
+        private void Awake()
+        {
+            _serviceA = DI.Resolve<IServiceA>();
+            _serviceD = DI.Resolve<IServiceD>("instance");
+        }
+    }

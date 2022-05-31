@@ -6,7 +6,7 @@ internal static class AppDependencyBootstrap
     {
         IServiceProvider serviceProvider = builder
             .RegisterServiceConfiguration(ConfigureCoreServices)
-        //    .RegisterServiceConfiguration(MySystemBootstrapClass.ConfigureServices)
+        //  .RegisterServiceConfiguration(MySystemBootstrapClass.ConfigureServices)
             .Register
             .Build();
 

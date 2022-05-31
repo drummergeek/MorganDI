@@ -127,6 +127,6 @@ Resolving a service in a MonoBehviour is done by calling the Resolve method on t
         private void Awake()
         {
             _serviceA = DI.Resolve<IServiceA>();
-            _serviceD = DI.Resolve<IServiceD>("instance");
+            _serviceD = DI.Resolve<IServiceD>("direct");
         }
     }

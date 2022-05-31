@@ -29,79 +29,79 @@ The following example creates a service provider builder, then passes it to a co
 
 	public class DependencyInjection : MonoBehaviour
 	{
-		private void Awake()
-		{
-			DI.Initialize();
-		}
+	    private void Awake()
+	    {
+	        DI.Initialize();
+	    }
 
-		private void OnDestroy()
-		{
-			DI.TeardownScene();
-		}
+	    private void OnDestroy()
+	    {
+	        DI.TeardownScene();
+	    }
 	}
 
 	public static class DI
 	{
-		private readonly static object _lock = new object();
+	    private readonly static object _lock = new object();
 
-		private static IServiceProvider _serviceProvider;
+	    private static IServiceProvider _serviceProvider;
 
-		/// <summary>
-		/// Build the DI container if it is not yet available.
-		/// </summary>
-		public static void Initialize()
-		{
-			if (_serviceProvider == null)
-				lock (_lock)
-				    // Ensure that something else didn't instantiate it before we acquired the lock
-					if (_serviceProvider == null) 
-					{
-						_serviceProvider = AppDependencyBootstrap.BuildContainer(new ServiceProviderBuilder());
-					}
-		}
+	    /// <summary>
+	    /// Build the DI container if it is not yet available.
+	    /// </summary>
+	    public static void Initialize()
+	    {
+	        if (_serviceProvider == null)
+	            lock (_lock)
+	                // Ensure that something else didn't instantiate it before we acquired the lock
+	                if (_serviceProvider == null) 
+	                {
+	                    _serviceProvider = AppDependencyBootstrap.BuildContainer(new ServiceProviderBuilder());
+	                }
+	    }
 		
-		/// <inheritdoc cref="IServiceProvider.TeardownScene"/>
-		public static void TeardownScene()
-		{
-			if (_serviceProvider == null)
-				throw new InvalidOperationException("DI container not initialized!");
-			
-			_serviceProvider.TeardownScene();
-		}
+	    /// <inheritdoc cref="IServiceProvider.TeardownScene"/>
+	    public static void TeardownScene()
+	    {
+	        if (_serviceProvider == null)
+	            throw new InvalidOperationException("DI container not initialized!");
+	
+	        _serviceProvider.TeardownScene();
+	    }
 		
-		/// <summary>
-		/// Return an instance of the requested service.
-		/// </summary>
-		/// <typeparam name="TService">The type of the service requested.</typeparam>
-		/// <param name="name">The optional instance name of the service requested.</param>
-		public static TService Resolve<TService>(string name = null)
-		{
-			if (_serviceProvider == null)
-				throw new InvalidOperationException("DI container not initialized!");
-			
-			return _serviceProvider.Resolve<TService>(name);
-		}
+	    /// <summary>
+	    /// Return an instance of the requested service.
+	    /// </summary>
+	    /// <typeparam name="TService">The type of the service requested.</typeparam>
+	    /// <param name="name">The optional instance name of the service requested.</param>
+	    public static TService Resolve<TService>(string name = null)
+	    {
+	        if (_serviceProvider == null)
+	            throw new InvalidOperationException("DI container not initialized!");
+	
+	        return _serviceProvider.Resolve<TService>(name);
+	    }
 	}
 
 The Bootstrap class below is what actually performs the configuration of the builder and returns the container.
 
 	internal static class AppDependencyBootstrap
 	{
-		public static IServiceProvider BuildContainer(IServiceProviderBuilder builder)
-		{
-			IServiceProvider serviceProvider = builder
-				.RegisterServiceConfiguration(ConfigureCoreServices)
-			//  .RegisterServiceConfiguration(MySystemBootstrapClass.ConfigureServices)
-				.Register
-				.Build();
-
-			return serviceProvider;
-		}
-
-		private static void ConfigureCoreServices(IServiceCollection serviceCollection)
-		{
-			// Add core service registrations here
-		}
+	    public static IServiceProvider BuildContainer(IServiceProviderBuilder builder)
+	    {
+	        IServiceProvider serviceProvider = builder
+	            .RegisterServiceConfiguration(ConfigureCoreServices)
+	        //  .RegisterServiceConfiguration(MySystemBootstrapClass.ConfigureServices)
+	            .Register
+	            .Build();
+	
+	        return serviceProvider;
+	    }
+	
+	    private static void ConfigureCoreServices(IServiceCollection serviceCollection)
+	    {
+	        // Add core service registrations here
+	    }
 	}
 
 
@@ -111,7 +111,7 @@ Resolving a service in a MonoBehviour is done by calling the Resolve method on t
     {
         private IServiceA _serviceA;
         private IServiceD _serviceD;
-        
+    
         private void Awake()
         {
             _serviceA = DI.Resolve<IServiceA>();

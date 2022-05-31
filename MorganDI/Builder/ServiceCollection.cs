@@ -66,12 +66,12 @@ namespace MorganDI
             if (!(LastAddedService is IParameterizedServiceResolver resolver))
                 throw new InvalidDependencyDefinitionException("Last registered service does not support binding parameters.");
 
-            var parameter = resolver.GetBindingParameter(parameterName);
+            IBindingParameter parameter = resolver.GetBindingParameter(parameterName);
 
             if (parameter == null)
                 throw new InvalidDependencyDefinitionException("No parameter was found matching the supplied parameterName");
 
-            var newParameter = bindingParameterConstructionCallback.Invoke(parameter);
+            IBindingParameter newParameter = bindingParameterConstructionCallback.Invoke(parameter);
 
             resolver.SetBindingParameter(newParameter);
         }

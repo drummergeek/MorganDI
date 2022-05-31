@@ -5,6 +5,55 @@ namespace MorganDI
 {
     internal class ServiceProvider : IServiceProvider
     {
+        // Provides a decorated version of the service provider to use during instantiation to track the requested services and catch circular references.
+        private class ServiceProviderRecursionInstance : IServiceProvider
+        {
+            private readonly ServiceProvider _serviceProvider;
+            private readonly Stack<ServiceIdentifier> _resolutionStack;
+
+            public ServiceProviderRecursionInstance(ServiceProvider serviceProvider, Stack<ServiceIdentifier> resolutionStack)
+            {
+                _serviceProvider = serviceProvider;
+                _resolutionStack = resolutionStack;
+            }
+
+            public event ServiceProviderEventHandler SceneTeardownRequested
+            {
+                add => _serviceProvider.SceneTeardownRequested += value;
+                remove => _serviceProvider.SceneTeardownRequested -= value;
+            }
+
+            public event ServiceProviderEventHandler SceneTeardownComplete
+            {
+                add => _serviceProvider.SceneTeardownComplete += value;
+                remove => _serviceProvider.SceneTeardownComplete -= value;
+            }
+
+            public event ServiceRequestedEventHandler ServiceRequested
+            {
+                add => _serviceProvider.ServiceRequested += value;
+                remove => _serviceProvider.ServiceRequested -= value;
+            }
+
+            public event ServiceResolvedEventHandler ServiceInstantiated
+            {
+                add => _serviceProvider.ServiceInstantiated += value;
+                remove => _serviceProvider.ServiceInstantiated -= value;
+            }
+
+            public event ServiceResolvedEventHandler ServiceResolved
+            {
+                add => _serviceProvider.ServiceResolved += value;
+                remove => _serviceProvider.ServiceResolved -= value;
+            }
+
+            public object Resolve(ServiceIdentifier identifier) => _serviceProvider.ResolveInternal(identifier, this, _resolutionStack);
+
+            public bool ServiceExists(ServiceIdentifier identifier, Scope scope) => _serviceProvider.ServiceExists(identifier, scope);
+
+            public void TeardownScene() => _serviceProvider.TeardownScene();
+        }
+
         private readonly object _lock = new object();
 
         private bool _singletonsInitialized = false;
@@ -25,7 +74,9 @@ namespace MorganDI
                 node.Scope <= scope;
         }
 
-        public object Resolve(ServiceIdentifier identifier)
+        public object Resolve(ServiceIdentifier identifier) => ResolveInternal(identifier);
+
+        private object ResolveInternal(ServiceIdentifier identifier, IServiceProvider serviceProvider = null, Stack<ServiceIdentifier> resolutionStack = null)
         {
             OnServiceRequested(identifier);
 
@@ -40,7 +91,18 @@ namespace MorganDI
             }
             else
             {
-                instance = node.Resolver.Resolve(this);
+                if (resolutionStack == null)
+                {
+                    resolutionStack = new Stack<ServiceIdentifier>();
+                    serviceProvider = new ServiceProviderRecursionInstance(this, resolutionStack);
+                }
+
+                if (resolutionStack.Contains(identifier))
+                    throw new InvalidDependencyDefinitionException($"Cyclical reference encountered, unable to resolve requested type '{resolutionStack.ToArray()[resolutionStack.Count-1]}'.");
+
+                resolutionStack.Push(identifier);
+                instance = node.Resolver.Resolve(serviceProvider);
+                resolutionStack.Pop();
 
                 if (node.Scope != Scope.Transient)
                 {
@@ -95,38 +157,36 @@ namespace MorganDI
 
         internal void InitializeSingletons()
         {
-            if (_singletonsInitialized)
-                return;
+            if (!_singletonsInitialized)
+                lock (_lock)
+                    if (!_singletonsInitialized)
+                    {
+                        List<DependencyNode> sortedNodes = new List<DependencyNode>();
 
-            lock (_lock)
-            {
-                if (_singletonsInitialized)
-                    return;
+                        // Find all singleton nodes and add them to the singleton container
+                        foreach (DependencyNode node in _allDependencyNodes.Values)
+                        {
+                            // Only add singletons, ignore duplicates due to aliases
+                            if (node.Scope == Scope.Singleton && !sortedNodes.Contains(node))
+                                sortedNodes.Add(node);
+                        }
 
-                List<DependencyNode> sortedNodes = new List<DependencyNode>();
+                        sortedNodes.Sort((a, b) => a.InitializationIndex.CompareTo(b.InitializationIndex));
 
-                // Find all singleton nodes and add them to the singleton container
-                foreach (var node in _allDependencyNodes.Values)
-                {
-                    // Only add singletons, ignore duplicates due to aliases
-                    if (node.Scope == Scope.Singleton && !sortedNodes.Contains(node))
-                        sortedNodes.Add(node);
-                }
+                        IServiceProvider recursionInstance = new ServiceProviderRecursionInstance(this, new Stack<ServiceIdentifier>());
+                        foreach (DependencyNode node in sortedNodes)
+                        {
+                            recursionInstance.Resolve(node.Identifier);
+                            //if (node.IsResolved)
+                            //    continue;
 
-                sortedNodes.Sort((a, b) => a.InitializationIndex.CompareTo(b.InitializationIndex));
+                            //node.Instance = node.Resolver.Resolve(new ServiceProviderRecursionInstance(this, new Stack<ServiceIdentifier>());
+                            //node.IsResolved = true;
+                            //node.IsDisposable = node.Instance != null && node is IDisposable;
+                        }
 
-                foreach (DependencyNode node in sortedNodes)
-                {
-                    if (node.IsResolved)
-                        continue;
-
-                    node.Instance = node.Resolver.Resolve(this);
-                    node.IsResolved = true;
-                    node.IsDisposable = node.Instance != null && node is IDisposable;
-                }
-
-                _singletonsInitialized = true;
-            }
+                        _singletonsInitialized = true;
+                    }
         }
 
         private void OnSceneTeardownRequested() => SceneTeardownRequested?.Invoke(this);

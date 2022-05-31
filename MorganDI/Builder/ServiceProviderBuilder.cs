@@ -47,7 +47,7 @@ namespace MorganDI
             IServiceCollection serviceCollection = new ServiceCollection();
 
             // Configure the service collection
-            foreach (var configurationDelegate in _configurationDelegates)
+            foreach (ServiceConfigurationDelegate configurationDelegate in _configurationDelegates)
                 configurationDelegate(serviceCollection);
 
             List<(ServiceIdentifier Alias, ServiceIdentifier Root)> aliases = new List<(ServiceIdentifier Alias, ServiceIdentifier Root)>();

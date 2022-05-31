@@ -27,7 +27,7 @@ namespace MorganDI.Resolvers
 
             for(int i = 0; i < parameterInfo.Length; i++)
             {
-                var parameter = parameterInfo[i];
+                ParameterInfo parameter = parameterInfo[i];
                 _bindingParameterIndexes.Add(parameter.Name, i);
                 _bindingParameters[i] = ServiceBindingParameter.Create(parameter);
             }

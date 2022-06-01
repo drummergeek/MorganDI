@@ -9,12 +9,12 @@ namespace MorganDI
         private class ServiceProviderRecursionInstance : IServiceProvider
         {
             private readonly ServiceProvider _serviceProvider;
-            private readonly Stack<ServiceIdentifier> _resolutionStack;
 
-            public ServiceProviderRecursionInstance(ServiceProvider serviceProvider, Stack<ServiceIdentifier> resolutionStack)
+            public Stack<ServiceIdentifier> ResolutionStack { get; } = new Stack<ServiceIdentifier>();
+
+            public ServiceProviderRecursionInstance(ServiceProvider serviceProvider)
             {
                 _serviceProvider = serviceProvider;
-                _resolutionStack = resolutionStack;
             }
 
             public event ServiceProviderEventHandler SceneTeardownRequested
@@ -47,7 +47,7 @@ namespace MorganDI
                 remove => _serviceProvider.ServiceResolved -= value;
             }
 
-            public object Resolve(ServiceIdentifier identifier) => _serviceProvider.ResolveInternal(identifier, this, _resolutionStack);
+            public object Resolve(ServiceIdentifier identifier) => _serviceProvider.ResolveInternal(identifier, this);
 
             public bool ServiceExists(ServiceIdentifier identifier, Scope scope) => _serviceProvider.ServiceExists(identifier, scope);
 
@@ -76,7 +76,7 @@ namespace MorganDI
 
         public object Resolve(ServiceIdentifier identifier) => ResolveInternal(identifier);
 
-        private object ResolveInternal(ServiceIdentifier identifier, IServiceProvider serviceProvider = null, Stack<ServiceIdentifier> resolutionStack = null)
+        private object ResolveInternal(ServiceIdentifier identifier, ServiceProviderRecursionInstance serviceProvider = null)
         {
             OnServiceRequested(identifier);
 
@@ -84,6 +84,7 @@ namespace MorganDI
                 throw new ArgumentException($"No service found that matches the supplied identifier, '{identifier}'.", nameof(identifier));
 
             object instance;
+
             // No need to check anything, we've already resolved it.
             if (node.IsResolved)
             {
@@ -91,18 +92,15 @@ namespace MorganDI
             }
             else
             {
-                if (resolutionStack == null)
-                {
-                    resolutionStack = new Stack<ServiceIdentifier>();
-                    serviceProvider = new ServiceProviderRecursionInstance(this, resolutionStack);
-                }
+                if (serviceProvider != null && serviceProvider.ResolutionStack.Contains(identifier))
+                    throw new InvalidDependencyDefinitionException(
+                        $"Cyclical reference encountered, unable to resolve requested type '{serviceProvider.ResolutionStack.ToArray()[serviceProvider.ResolutionStack.Count - 1]}'.");
 
-                if (resolutionStack.Contains(identifier))
-                    throw new InvalidDependencyDefinitionException($"Cyclical reference encountered, unable to resolve requested type '{resolutionStack.ToArray()[resolutionStack.Count-1]}'.");
+                serviceProvider = serviceProvider ?? new ServiceProviderRecursionInstance(this);
 
-                resolutionStack.Push(identifier);
+                serviceProvider.ResolutionStack.Push(identifier);
                 instance = node.Resolver.Resolve(serviceProvider);
-                resolutionStack.Pop();
+                serviceProvider.ResolutionStack.Pop();
 
                 if (node.Scope != Scope.Transient)
                 {
@@ -173,16 +171,10 @@ namespace MorganDI
 
                         sortedNodes.Sort((a, b) => a.InitializationIndex.CompareTo(b.InitializationIndex));
 
-                        IServiceProvider recursionInstance = new ServiceProviderRecursionInstance(this, new Stack<ServiceIdentifier>());
+                        IServiceProvider recursionInstance = new ServiceProviderRecursionInstance(this);
                         foreach (DependencyNode node in sortedNodes)
                         {
                             recursionInstance.Resolve(node.Identifier);
-                            //if (node.IsResolved)
-                            //    continue;
-
-                            //node.Instance = node.Resolver.Resolve(new ServiceProviderRecursionInstance(this, new Stack<ServiceIdentifier>());
-                            //node.IsResolved = true;
-                            //node.IsDisposable = node.Instance != null && node is IDisposable;
                         }
 
                         _singletonsInitialized = true;

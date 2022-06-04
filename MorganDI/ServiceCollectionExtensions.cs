@@ -10,11 +10,36 @@ namespace MorganDI
         /// <typeparam name="TService">The service to be bound.</typeparam>
         /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
         /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
-        /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
-        public static IServiceCollection AddSingletonService<TService, TInstance>(this IServiceCollection serviceCollection, string name = null)
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddSingletonService<TService, TInstance>(this IServiceCollection serviceCollection, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
             where TService : class
             where TInstance : TService =>
-                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Singleton, name);
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Singleton, factoryConfigurationHandler);
+
+        /// <summary>
+        /// Register a service to a concrete class in the singleton scope of the provided <see cref="IServiceCollection"/>.
+        /// </summary>
+        /// <typeparam name="TService">The service to be bound.</typeparam>
+        /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
+        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
+        /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddSingletonService<TService, TInstance>(this IServiceCollection serviceCollection, string name, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
+            where TService : class
+            where TInstance : TService =>
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Singleton, name, factoryConfigurationHandler);
+
+        /// <summary>
+        /// Register a service to a concrete class in the scene scope of the provided <see cref="IServiceCollection"/>.
+        /// </summary>
+        /// <typeparam name="TService">The service to be bound.</typeparam>
+        /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
+        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddSceneService<TService, TInstance>(this IServiceCollection serviceCollection, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
+            where TService : class
+            where TInstance : TService =>
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Scene, factoryConfigurationHandler);
 
         /// <summary>
         /// Register a service to a concrete class in the scene scope of the provided <see cref="IServiceCollection"/>.
@@ -23,10 +48,23 @@ namespace MorganDI
         /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
         /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
         /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
-        public static IServiceCollection AddSceneService<TService, TInstance>(this IServiceCollection serviceCollection, string name = null)
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddSceneService<TService, TInstance>(this IServiceCollection serviceCollection, string name, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
             where TService : class
             where TInstance : TService =>
-                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Scene, name);
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Scene, name, factoryConfigurationHandler);
+
+        /// <summary>
+        /// Register a service to a concrete class in the transient scope of the provided <see cref="IServiceCollection"/>.
+        /// </summary>
+        /// <typeparam name="TService">The service to be bound.</typeparam>
+        /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
+        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddTransientService<TService, TInstance>(this IServiceCollection serviceCollection, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
+            where TService : class
+            where TInstance : TService =>
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Transient, factoryConfigurationHandler);
 
         /// <summary>
         /// Register a service to a concrete class in the transient scope of the provided <see cref="IServiceCollection"/>.
@@ -35,10 +73,11 @@ namespace MorganDI
         /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
         /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
         /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
-        public static IServiceCollection AddTransientService<TService, TInstance>(this IServiceCollection serviceCollection, string name = null)
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddTransientService<TService, TInstance>(this IServiceCollection serviceCollection, string name, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
             where TService : class
             where TInstance : TService =>
-                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Transient, name);
+                AddServiceToScope<TService, TInstance>(serviceCollection, Scope.Transient, name, factoryConfigurationHandler);
 
         /// <summary>
         /// Register a service to a concrete class in the supplied scope of the provided <see cref="IServiceCollection"/>.
@@ -47,16 +86,33 @@ namespace MorganDI
         /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
         /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
         /// <param name="scope">The <see cref="Scope"/> the service in which the service is registered.</param>
-        /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
-        public static IServiceCollection AddServiceToScope<TService, TInstance>(this IServiceCollection serviceCollection, Scope scope, string name = null)
+        /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+        public static IServiceCollection AddServiceToScope<TService, TInstance>(this IServiceCollection serviceCollection, Scope scope, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
+            where TService : class
+            where TInstance : TService =>
+                AddServiceToScope<TService, TInstance>(serviceCollection, scope, null, factoryConfigurationHandler);
+
+            /// <summary>
+            /// Register a service to a concrete class in the supplied scope of the provided <see cref="IServiceCollection"/>.
+            /// </summary>
+            /// <typeparam name="TService">The service to be bound.</typeparam>
+            /// <typeparam name="TInstance">The concrete type used to resolve the service.</typeparam>
+            /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which to add the registration.</param>
+            /// <param name="scope">The <see cref="Scope"/> the service in which the service is registered.</param>
+            /// <param name="name">The optional name for the service, if null or empty it will be the default provider.</param>
+            /// <param name="factoryConfigurationHandler">Optional delegate to configure the service factory for instantiating the service.</param>
+            public static IServiceCollection AddServiceToScope<TService, TInstance>(this IServiceCollection serviceCollection, Scope scope, string name, ServiceFactoryConfigurationHandler factoryConfigurationHandler = null)
             where TService : class
             where TInstance : TService
         {
             if (serviceCollection == null)
                 throw new ArgumentNullException(nameof(serviceCollection));
 
-            serviceCollection.AddService(typeof(TService), name, scope, typeof(TInstance));
+            ServiceIdentifier identifier = ServiceIdentifier.Create<TService>(name);
+            FactoryServiceRegistration registration = new FactoryServiceRegistration(identifier, scope, typeof(TInstance), factoryConfigurationHandler);
 
+            serviceCollection.Add(registration);
+            
             return serviceCollection;
         }
 
@@ -148,7 +204,10 @@ namespace MorganDI
             if (serviceCollection == null)
                 throw new ArgumentNullException(nameof(serviceCollection));
 
-            serviceCollection.AddServiceDelegate<TService>(name, scope, serviceDelegate);
+            ServiceIdentifier identifier = ServiceIdentifier.Create<TService>(name);
+            DelegateServiceRegistration<TService> registration = new DelegateServiceRegistration<TService>(identifier, scope, serviceDelegate);
+
+            serviceCollection.Add(registration);
 
             return serviceCollection;
         }
@@ -176,7 +235,10 @@ namespace MorganDI
             if (serviceCollection == null)
                 throw new ArgumentNullException(nameof(serviceCollection));
 
-            serviceCollection.AddServiceInstance(typeof(TService), name, value);
+            ServiceIdentifier identifier = ServiceIdentifier.Create<TService>(name);
+            StaticServiceRegistration registration = new StaticServiceRegistration(identifier, value);
+
+            serviceCollection.Add(registration);
 
             return serviceCollection;
         }
@@ -196,59 +258,65 @@ namespace MorganDI
             if (serviceCollection == null)
                 throw new ArgumentNullException(nameof(serviceCollection));
 
-            serviceCollection.AddServiceAlias(typeof(TAlias), aliasName, typeof(TService), serviceName);
+            ServiceIdentifier alias = ServiceIdentifier.Create<TAlias>(aliasName);
+            ServiceIdentifier service = ServiceIdentifier.Create<TService>(serviceName);
+
+            AliasServiceRegistration registration = new AliasServiceRegistration(alias, service);
+
+            serviceCollection.Add(registration);
 
             return serviceCollection;
         }
 
         /// <summary>
-        /// Bind a parameter on the last service registration to a specific service registered in the provided <see cref="IServiceCollection"/>.
+        /// Bind a construction parameter on the service factory to an existing service.
         /// </summary>
-        /// <typeparam name="TService">The service to be bound.</typeparam>
-        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which the assoicated service was last added.</param>
+        /// <typeparam name="TService">The type of the service to be bound.</typeparam>
+        /// <param name="serviceFactory">The <see cref="IServiceFactory"/> handling the instantiation.</param>
         /// <param name="parameterName">The name of the parameter to be configured.</param>
         /// <param name="serviceName">The optional name of the service to be bound.</param>
-        public static IServiceCollection BindParameterToService<TService>(this IServiceCollection serviceCollection, string parameterName, string serviceName = null)
+        public static IServiceFactory BindParameterToService<TService>(this IServiceFactory serviceFactory, string parameterName, string serviceName = null)
         {
-            if (serviceCollection == null)
-                throw new ArgumentNullException(nameof(serviceCollection));
+            if (serviceFactory == null)
+                throw new ArgumentNullException(nameof(serviceFactory));
 
-            serviceCollection.BindParameter(parameterName, typeof(TService), serviceName);
+            serviceFactory.BindParameter(parameterName, ServiceIdentifier.Create<TService>(serviceName));
 
-            return serviceCollection;
+            return serviceFactory;
         }
 
         /// <summary>
-        /// Bind a parameter on the last service registration to a static value in the provided <see cref="IServiceCollection"/>.
+        /// Bind a construction parameter on the service factory to a static value.
         /// </summary>
-        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which the assoicated service was last added.</param>
+        /// <typeparam name="TValue">The type of the value to be bound.</typeparam>
+        /// <param name="serviceFactory">The <see cref="IServiceFactory"/> handling the instantiation.</param>
         /// <param name="parameterName">The name of the parameter to be configured.</param>
         /// <param name="value">The static value to bind to the parameter.</param>
-        public static IServiceCollection BindParameterToValue(this IServiceCollection serviceCollection, string parameterName, object value)
+        public static IServiceFactory BindParameterToValue<TValue>(this IServiceFactory serviceFactory, string parameterName, TValue value)
         {
-            if (serviceCollection == null)
-                throw new ArgumentNullException(nameof(serviceCollection));
+            if (serviceFactory == null)
+                throw new ArgumentNullException(nameof(serviceFactory));
 
-            serviceCollection.BindParameter(parameterName, value);
+            serviceFactory.BindParameter(parameterName, value);
 
-            return serviceCollection;
+            return serviceFactory;
         }
 
         /// <summary>
-        /// Bind a parameter on the last service registration to a delegate in the provided <see cref="IServiceCollection"/>.
+        /// Bind a construction parameter on the service factory to a delegate.
         /// </summary>
         /// <typeparam name="TService">The return type of the delegate to be bound.</typeparam>
-        /// <param name="serviceCollection">The <see cref="IServiceCollection"/> in which the assoicated service was last added.</param>
+        /// <param name="serviceFactory">The <see cref="IServiceFactory"/> handling the instantiation.</param>
         /// <param name="parameterName">The name of the parameter to be configured.</param>
         /// <param name="serviceDelegate">The delegate to be invoked to resolve the parameter.</param>
-        public static IServiceCollection BindParameterToDelegate<TService>(this IServiceCollection serviceCollection, string parameterName, ServiceDelegate<TService> serviceDelegate)
+        public static IServiceFactory BindParameterToDelegate<TService>(this IServiceFactory serviceFactory, string parameterName, ServiceDelegate<TService> serviceDelegate)
         {
-            if (serviceCollection == null)
-                throw new ArgumentNullException(nameof(serviceCollection));
+            if (serviceFactory == null)
+                throw new ArgumentNullException(nameof(serviceFactory));
 
-            serviceCollection.BindParameter(parameterName, serviceDelegate);
+            serviceFactory.BindParameter(parameterName, serviceDelegate);
 
-            return serviceCollection;
+            return serviceFactory;
         }
     }
 }

@@ -5,20 +5,28 @@ namespace MorganDI
 {
     public delegate TService ServiceDelegate<TService>(IServiceProvider serviceProvider);
 
-    public interface IServiceCollection : IEnumerable<IServiceResolver>
+    /// <summary>
+    /// Represents a collection of configured service registrations.
+    /// </summary>
+    public interface IServiceCollection : IEnumerable<ServiceRegistration>
     {
-        IServiceResolver LastAddedService { get; }
+        /// <summary>
+        /// Returns whether or not the requested service is registered in the collection at or below the requested scope.
+        /// </summary>
+        /// <param name="identifier">The identifer of the requested service.</param>
+        /// <param name="scope">The requested scope.</param>
+        bool Contains(ServiceIdentifier identifier, Scope scope);
 
-        bool ContainsService(ServiceIdentifier identifier);
-        void AddService(IServiceResolver serviceResolver);
+        /// <summary>
+        /// Returns the current <see cref="ServiceRegistration"/> for the requested service.
+        /// </summary>
+        /// <param name="identifier">The identifier of the requested service.</param>
+        ServiceRegistration Get(ServiceIdentifier identifier);
 
-        void AddService(Type serviceType, string name, Scope scope, Type instanceType);
-        void AddServiceDelegate<TService>(string name, Scope scope, ServiceDelegate<TService> serviceDelegate);
-        void AddServiceInstance(Type serviceType, string name, object value);
-        void AddServiceAlias(Type aliasType, string aliasName, Type serviceType, string serviceName);
-
-        void BindParameter(string parameterName, Type serviceType, string serviceName);
-        void BindParameter<TService>(string parameterName, ServiceDelegate<TService> serviceDelegate);
-        void BindParameter(string parameterName, object value);
+        /// <summary>
+        /// Adds the provided service to the collection.
+        /// </summary>
+        /// <param name="serviceRegistration">The service to be added to the collection.</param>
+        void Add(ServiceRegistration serviceRegistration);
     }
 }

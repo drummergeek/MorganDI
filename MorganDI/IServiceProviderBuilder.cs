@@ -26,6 +26,6 @@
         /// <summary>
         /// Register the supplied delegate to configure the <see cref="IServiceCollection"/>.
         /// </summary>
-        IServiceProviderBuilder RegisterServiceConfiguration(ServiceConfigurationDelegate configurationDelegate);
+        IServiceProviderBuilder Register(ServiceConfigurationDelegate configurationDelegate);
     }
 }

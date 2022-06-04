@@ -48,5 +48,10 @@
         /// Destroy all instances existing in the current scene container.
         /// </summary>
         void TeardownScene();
+
+        /// <summary>
+        /// Initializes the service provider, if not already intialized.
+        /// </summary>
+        IServiceProvider Initialize();
     }
 }

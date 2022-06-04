@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace MorganDI.BindingParameters
+namespace MorganDI.Builder.ParameterBindings
 {
-    internal class StaticBindingParameter : BindingParameter
+    internal sealed class StaticBindingParameter : ParameterBinding
     {
         private readonly object _value;
 
@@ -14,12 +14,9 @@ namespace MorganDI.BindingParameters
             _value = value;
         }
 
-        public override object Resolve(IServiceProvider _, Scope scope)
-        {
-            return _value;
-        }
+        public override object Resolve(IServiceProvider _, Scope scope) => _value;
 
-        public static StaticBindingParameter Create(IBindingParameter parameter, object value) =>
+        public static StaticBindingParameter Create(ParameterBinding parameter, object value) =>
             new StaticBindingParameter(parameter.Name, parameter.ParameterType, value);
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MorganDI
+namespace MorganDI.Builder
 {
     internal class ServiceProvider : IServiceProvider
     {
@@ -52,6 +52,8 @@ namespace MorganDI
             public bool ServiceExists(ServiceIdentifier identifier, Scope scope) => _serviceProvider.ServiceExists(identifier, scope);
 
             public void TeardownScene() => _serviceProvider.TeardownScene();
+
+            public IServiceProvider Initialize() => _serviceProvider.Initialize();
         }
 
         private readonly object _lock = new object();
@@ -74,7 +76,12 @@ namespace MorganDI
                 node.Scope <= scope;
         }
 
-        public object Resolve(ServiceIdentifier identifier) => ResolveInternal(identifier);
+        public object Resolve(ServiceIdentifier identifier)
+        {
+            Initialize(); // Ensure that the container has been initialized before resolving.
+
+            return ResolveInternal(identifier);
+        }
 
         private object ResolveInternal(ServiceIdentifier identifier, ServiceProviderRecursionInstance serviceProvider = null)
         {
@@ -99,20 +106,11 @@ namespace MorganDI
                 serviceProvider = serviceProvider ?? new ServiceProviderRecursionInstance(this);
 
                 serviceProvider.ResolutionStack.Push(identifier);
-                instance = node.Resolver.Resolve(serviceProvider);
+                instance = node.Resolve(serviceProvider);
                 serviceProvider.ResolutionStack.Pop();
 
-                if (node.Scope != Scope.Transient)
-                {
-                    // The instance isn't transient, store it for future resolutions
-
-                    node.Instance = instance;
-                    node.IsDisposable = instance is IDisposable;
-                    node.IsResolved = true;
-
-                    if (node.Scope == Scope.Scene)
-                        _sceneContainer.Add(node);
-                }
+                if (node.Scope == Scope.Scene)
+                    _sceneContainer.Add(node);
 
                 OnServiceInstantiated(identifier, instance);
             }
@@ -127,33 +125,22 @@ namespace MorganDI
 
             if (_sceneContainer.Count > 0)
                 lock (_lock)
-                if (_sceneContainer.Count > 0)
-                {
-                    List<DependencyNode> sortedNodes = new List<DependencyNode>(_sceneContainer);
-                    // Sort the nodes in reverse order, so that the last instantiated is the first destroyed.
-                    sortedNodes.Sort((a, b) => b.InitializationIndex.CompareTo(a.InitializationIndex));
-
-                    foreach (DependencyNode node in sortedNodes)
+                    if (_sceneContainer.Count > 0)
                     {
-                        // Node hasn't been resolved
-                        if (!node.IsResolved || node.Instance == null)
-                            continue;
+                        List<DependencyNode> sortedNodes = new List<DependencyNode>(_sceneContainer);
+                        // Sort the nodes in reverse order, so that the last instantiated is the first destroyed.
+                        sortedNodes.Sort((a, b) => b.InitializationIndex.CompareTo(a.InitializationIndex));
 
-                        // Disposable types need to be be properly disposed of
-                        if (node.IsDisposable)
-                            ((IDisposable)node.Instance).Dispose();
-
-                        // Reset the instance data
-                        node.Instance = null;
-                        node.IsDisposable = false;
-                        node.IsResolved = false;
+                        foreach (DependencyNode node in sortedNodes)
+                        {
+                            node.Destroy();
+                        }
                     }
-                }
 
             OnSceneTeardownComplete();
         }
 
-        internal void InitializeSingletons()
+        public IServiceProvider Initialize()
         {
             if (!_singletonsInitialized)
                 lock (_lock)
@@ -179,6 +166,8 @@ namespace MorganDI
 
                         _singletonsInitialized = true;
                     }
+
+            return this;
         }
 
         private void OnSceneTeardownRequested() => SceneTeardownRequested?.Invoke(this);

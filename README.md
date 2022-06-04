@@ -107,12 +107,12 @@ The Bootstrap class below is what actually performs the configuration of the bui
 	            .AddServiceAlias<IServiceB, ServiceBC>()
 	            .AddServiceAlias<IServiceC, ServiceBC)()
 	            .AddSingletonService<IServiceD, ServiceD>("direct")
-	            .AddSingletonService<IServiceD, ServiceDDecorator>()
-	            .BindParameterToService<IServiceD>("instance", "direct")
-	            .BindParameterToValue("cacheLength", new TimeSpan(1, 0, 0))
+	            .AddSingletonService<IServiceD, ServiceDDecorator>(x => x
+	                .BindParameterToService<IServiceD>("instance", "direct")
+	                .BindParameterToValue("cacheLength", new TimeSpan(1, 0, 0)))
 	            .AddTransientService<IServiceE>(p => ServiceEFactory.Create())
-	            .AddSceneService<IServiceF, ServiceF>()
-	            .BindParameterToDelegate<string>("sceneName", p => Scene.GetSceneName());
+	            .AddSceneService<IServiceF, ServiceF>(x => x
+	                .BindParameterToDelegate<string>("sceneName", p => Scene.GetSceneName()));
 	    }
 	}
 

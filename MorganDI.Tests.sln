@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31729.503
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MorganDI", "MorganDI\MorganDI.csproj", "{2C94A58D-DCBD-4993-B822-AA2638903673}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{516B1CCE-1265-46C5-AB49-E3E9BAC2C25D}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MorganDI.Tests", "MorganDI.Tests\MorganDI.Tests.csproj", "{B5286BB5-E87C-4FD0-AEDD-61C16B181EAD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2C94A58D-DCBD-4993-B822-AA2638903673}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C94A58D-DCBD-4993-B822-AA2638903673}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C94A58D-DCBD-4993-B822-AA2638903673}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C94A58D-DCBD-4993-B822-AA2638903673}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5286BB5-E87C-4FD0-AEDD-61C16B181EAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5286BB5-E87C-4FD0-AEDD-61C16B181EAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5286BB5-E87C-4FD0-AEDD-61C16B181EAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5286BB5-E87C-4FD0-AEDD-61C16B181EAD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7973B3F5-4ADB-4750-B0FE-8A0017203F5E}
+	EndGlobalSection
+EndGlobal

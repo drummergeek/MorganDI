@@ -7,12 +7,22 @@
     public interface IServiceProvider
     {
         /// <summary>
-        /// Called when before a scene teardown is executed.
+        /// Called immediately before initialize is executed.
+        /// </summary>
+        event ServiceProviderEventHandler InitializeRequested;
+
+        /// <summary>
+        /// Called immediately after initialize is completed.
+        /// </summary>
+        event ServiceProviderEventHandler InitializeComplete;
+
+        /// <summary>
+        /// Called immediately before a scene teardown is executed.
         /// </summary>        
         event ServiceProviderEventHandler SceneTeardownRequested;
-        
+
         /// <summary>
-        /// Called when a scene teardown is complete.
+        /// Called immediately after a scene teardown is complete.
         /// </summary>
         event ServiceProviderEventHandler SceneTeardownComplete;
 

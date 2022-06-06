@@ -17,6 +17,18 @@ namespace MorganDI.Builder
                 _serviceProvider = serviceProvider;
             }
 
+            public event ServiceProviderEventHandler InitializeRequested
+            {
+                add => _serviceProvider.InitializeRequested += value;
+                remove => _serviceProvider.InitializeRequested -= value;
+            }
+
+            public event ServiceProviderEventHandler InitializeComplete
+            {
+                add => _serviceProvider.InitializeComplete += value;
+                remove => _serviceProvider.InitializeComplete -= value;
+            }
+
             public event ServiceProviderEventHandler SceneTeardownRequested
             {
                 add => _serviceProvider.SceneTeardownRequested += value;
@@ -62,6 +74,8 @@ namespace MorganDI.Builder
         private readonly Dictionary<ServiceIdentifier, DependencyNode> _allDependencyNodes = new Dictionary<ServiceIdentifier, DependencyNode>();
         private readonly HashSet<DependencyNode> _sceneContainer = new HashSet<DependencyNode>();
 
+        public event ServiceProviderEventHandler InitializeRequested;
+        public event ServiceProviderEventHandler InitializeComplete;
         public event ServiceProviderEventHandler SceneTeardownRequested;
         public event ServiceProviderEventHandler SceneTeardownComplete;
         public event ServiceRequestedEventHandler ServiceRequested;
@@ -146,6 +160,8 @@ namespace MorganDI.Builder
                 lock (_lock)
                     if (!_singletonsInitialized)
                     {
+                        OnInitializeRequested();
+
                         List<DependencyNode> sortedNodes = new List<DependencyNode>();
 
                         // Find all singleton nodes and add them to the singleton container
@@ -165,15 +181,36 @@ namespace MorganDI.Builder
                         }
 
                         _singletonsInitialized = true;
+
+                        OnInitializeComplete();
                     }
 
             return this;
         }
 
+        private void OnInitializeRequested() => InitializeRequested?.Invoke(this);
+        private void OnInitializeComplete() => InitializeComplete?.Invoke(this);
         private void OnSceneTeardownRequested() => SceneTeardownRequested?.Invoke(this);
         private void OnSceneTeardownComplete() => SceneTeardownComplete?.Invoke(this);
         private void OnServiceRequested(ServiceIdentifier serviceIdentifier) => ServiceRequested?.Invoke(this, serviceIdentifier);
         private void OnServiceInstantiated(ServiceIdentifier serviceIdentifier, object value) => ServiceInstantiated?.Invoke(this, serviceIdentifier, value);
         private void OnServiceResolved(ServiceIdentifier serviceIdentifier, object value) => ServiceResolved?.Invoke(this, serviceIdentifier, value);
+
+        ~ServiceProvider()
+        {
+            if (_allDependencyNodes.Count > 0)
+                lock (_lock)
+                    if (_allDependencyNodes.Count > 0)
+                    {
+                        List<DependencyNode> sortedNodes = new List<DependencyNode>(_allDependencyNodes.Values);
+                        // Sort the nodes in reverse order, so that the last instantiated is the first destroyed.
+                        sortedNodes.Sort((a, b) => b.InitializationIndex.CompareTo(a.InitializationIndex));
+
+                        foreach (DependencyNode node in sortedNodes)
+                        {
+                            node.Destroy();
+                        }
+                    }
+        }
     }
 }

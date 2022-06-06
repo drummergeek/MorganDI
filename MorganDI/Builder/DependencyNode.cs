@@ -36,7 +36,7 @@ namespace MorganDI.Builder
             if (Scope != Scope.Transient)
             {
                 Instance = instance;
-                _isDisposable = instance != null && instance.GetType() is IDisposable;
+                _isDisposable = instance != null && instance is IDisposable;
                 IsResolved = true;
             }
 

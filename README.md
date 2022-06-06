@@ -20,7 +20,7 @@ Supports 3 Lifetime Scopes
 * Events wired to the service provider and service provider builder to know when services are instantiating, and when they are requested.
 
 ## Coming Soon
-* Full test suite for the default implementation.
+* ~~Full test suite for the default implementation.~~ Done!
 * More complete documentation.
 * ~~MonoBehvaiour examples for direct usage in Unity.~~ Added!
 
@@ -103,7 +103,7 @@ The Bootstrap class below is what actually performs the configuration of the bui
 	        // Add core service registrations here
 	        serviceCollection
 	            .AddStaticInstance<IServiceA>(new ServiceA())
-	            .AddSingletonService<ServiceBC, ServiceBC)
+	            .AddSingletonService<ServiceBC>()
 	            .AddServiceAlias<IServiceB, ServiceBC>()
 	            .AddServiceAlias<IServiceC, ServiceBC)()
 	            .AddSingletonService<IServiceD, ServiceD>("direct")
